@@ -1,0 +1,41 @@
+{
+  "name": "Vera",
+  "description": "AI broker for real tokenized stocks on BNB Chain. You tell Vera a goal in plain words; she builds a diversified portfolio of xStocks (issued by Backed, traded on PancakeSwap), signs every recommendation with EIP-712, commits it on-chain via StaxExecutor before execution, and places it gasless (ERC-4337). Autopilot runs the strategy on a schedule inside hard user-set bounds: amount, cadence, risk ceiling, spend cap. Every run is checked against those limits before anything signs. Non-custodial; the user holds the tokens.",
+  "image": "https://www.stax.best/icon-512.png",
+  "active": true,
+  "services": {
+    "web": {
+      "url": "https://www.stax.best"
+    }
+  },
+  "supportedTrust": [
+    "reputation"
+  ],
+  "skills": [
+    "portfolio-allocation",
+    "trading-strategy",
+    "risk-management",
+    "dollar-cost-averaging"
+  ],
+  "domains": [
+    "finance",
+    "investing",
+    "real-world-assets"
+  ],
+  "x402": false,
+  "metadata": {
+    "version": "1.0",
+    "chain": "bsc-testnet",
+    "chainId": 97,
+    "app": "https://www.stax.best",
+    "demo": "https://www.stax.best/demo",
+    "sourceCode": "https://github.com/Magicianhax/stax",
+    "staxExecutor": "0x8d684d9efcd779e69c29901292bd88266d5d2bdf",
+    "inferenceVerifier": "0x674031d24b0b7874f1b9b278b98ebfebbdaa96ec",
+    "staxIdentityRegistry": "0x5dd8fcb6a206b9f24847fbbc925e642b836555ea",
+    "staxAgentId": 1,
+    "note": "Vera also holds agentId 1 in Stax's own ERC-8004-style IdentityRegistry on BNB Chain (address above); recommendations are committed through StaxExecutor and risk-gated by InferenceVerifier.",
+    "erc8004AgentId": "97:2473",
+    "erc8004IdentityRegistry": "0x8004A818BFB912233c491871b3d84c89A494BD9e"
+  }
+}
