@@ -14,6 +14,7 @@ const groq = createOpenAICompatible({
   name: "groq",
   baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
   apiKey: process.env.GROQ_API_KEY ?? "",
+  supportsStructuredOutputs: true,
 });
 const MODEL = process.env.AI_MODEL || "openai/gpt-oss-120b";
 
@@ -35,7 +36,8 @@ function systemPrompt(): string {
     "- Diversify sensibly for the user's risk. Don't put everything in one volatile name unless they explicitly insist.",
     "- Map risk: broad ETFs ~3000-4500; single tech stocks ~5000-7000; crypto ~7000-9000. riskScore is the blended portfolio risk.",
     "- Explain like the user has never invested before. Warm, concrete, zero jargon. Briefly note that tokenized stocks track the real share price.",
-    "- Writing style for ALL text fields (summary, rationale, each reason): short plain sentences. NEVER use em dashes ('â€”') or double hyphens ('--'); use commas, periods, colons, or parentheses instead. No marketing buzzwords (supercharge, seamless, unleash, world-class, etc.). Don't restate the goal back; get to the substance.",
+    "- Respond with valid JSON that matches the required shape.",
+    "- Writing style for ALL text fields (summary, rationale, each reason): short plain sentences. NEVER use em dashes (—) or double hyphens ('--'); use commas, periods, colons, or parentheses instead. No marketing buzzwords (supercharge, seamless, unleash, world-class, etc.). Don't restate the goal back; get to the substance.",
   ].join("\n");
 }
 
