@@ -1,18 +1,18 @@
-import "server-only";
+﻿import "server-only";
 
-// Autopilot store — Supabase Postgres (durable source of truth).
+// Autopilot store â€” Supabase Postgres (durable source of truth).
 //   autopilots      one row per user: the config + run accounting.
 //   autopilot_runs  append-only audit log of every run (success/skipped/error).
 //
 // Scheduling safety: the cron claims due rows via claim_due_autopilots(), an
 // atomic UPDATE ... RETURNING that advances next_run_at (and resets the period
-// spend) as it reads — so two overlapping cron invocations can never run the same
+// spend) as it reads â€” so two overlapping cron invocations can never run the same
 // autopilot twice. recordRun() therefore never touches next_run_at; the claim owns
 // the schedule. See supabase/migrations/*_autopilot.sql.
 import type { AutopilotConfig } from "@/lib/autopilot";
 import { supabaseAdmin } from "@/lib/server/supabase";
 
-const TABLE = "autopilots";
+const TABLE = "autopilots_staxBNB";
 
 type Row = Record<string, unknown>;
 
@@ -122,7 +122,7 @@ export interface RunLog {
 /** Recent runs for a user, newest first (the audit trail shown in the app). */
 export async function listRuns(userId: string, limit = 20): Promise<RunLog[]> {
   const { data, error } = await supabaseAdmin()
-    .from("autopilot_runs")
+    .from("autopilot_runs_staxBNB")
     .select("*")
     .eq("user_id", userId)
     .order("ran_at", { ascending: false })
@@ -143,7 +143,7 @@ export async function listRuns(userId: string, limit = 20): Promise<RunLog[]> {
 /** Append to the audit log. A logging failure must never break a run. */
 export async function logRun(entry: RunLog): Promise<void> {
   try {
-    const { error } = await supabaseAdmin().from("autopilot_runs").insert({
+    const { error } = await supabaseAdmin().from("autopilot_runs_staxBNB").insert({
       user_id: entry.userId,
       ran_at: entry.ranAt,
       amount_usd: entry.amountUsd,

@@ -1,20 +1,20 @@
-import type { NextRequest } from "next/server";
+﻿import type { NextRequest } from "next/server";
 import { AllocateRequestSchema } from "@/lib/allocation-schema";
 import { buildAllocation, ALLOCATE_MODEL } from "@/lib/server/allocate";
 import { verifyRequest } from "@/lib/server/privyAuth";
 import { rateLimit } from "@/lib/server/rateLimit";
 import { unauthorized, badRequest, tooManyRequests, serverError } from "@/lib/server/respond";
 
-// Uses the Anthropic API + user input — never cache.
+// Uses the Groq API + user input â€” never cache.
 export const dynamic = "force-dynamic";
 
 // H-6: surface a missing key at module load (startup) rather than first request.
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error("[allocate] ANTHROPIC_API_KEY is not set — allocations will fail.");
+if (!process.env.GROQ_API_KEY) {
+  console.error("[allocate] GROQ_API_KEY is not set â€” allocations will fail.");
 }
 
 export async function POST(req: NextRequest) {
-  // C-2: only a signed-in user can spend Anthropic tokens.
+  // C-2: only a signed-in user can spend Groq tokens.
   const user = await verifyRequest(req);
   if (!user) return unauthorized();
 

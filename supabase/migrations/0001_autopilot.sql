@@ -1,9 +1,9 @@
--- Stax Autopilot — durable store, audit log, atomic claim, and scheduler.
--- Run in the Supabase SQL editor (Dashboard → SQL) or via `supabase db push`.
+﻿-- Stax Autopilot â€” durable store, audit log, atomic claim, and scheduler.
+-- Run in the Supabase SQL editor (Dashboard â†’ SQL) or via `supabase db push`.
 -- Safe to re-run (idempotent).
 
 -- 1) Tables -----------------------------------------------------------------
-create table if not exists public.autopilots (
+create table if not exists public."autopilots_staxBNB" (
   user_id            text primary key,        -- Privy user id (one autopilot per user)
   id                 text not null,
   wallet_id          text not null,           -- Privy embedded-wallet id (server signs for this)
@@ -21,9 +21,9 @@ create table if not exists public.autopilots (
   runs               integer not null default 0,
   spent_this_period  numeric not null default 0
 );
-create index if not exists autopilots_due_idx on public.autopilots (next_run_at) where active;
+create index if not exists autopilots_due_idx on public."autopilots_staxBNB" (next_run_at) where active;
 
-create table if not exists public.autopilot_runs (
+create table if not exists public."autopilot_runs_staxBNB" (
   id                bigserial primary key,
   user_id           text not null,
   ran_at            bigint not null,           -- unix seconds
@@ -35,23 +35,23 @@ create table if not exists public.autopilot_runs (
   holdings          jsonb,                     -- what the run bought: [{symbol,weightPct,amountUsd}]
   created_at        timestamptz not null default now()
 );
-create index if not exists autopilot_runs_user_idx on public.autopilot_runs (user_id, ran_at desc);
+create index if not exists autopilot_runs_user_idx on public."autopilot_runs_staxBNB" (user_id, ran_at desc);
 
--- 2) RLS — lock both tables. Only the service-role key (server) touches them;
+-- 2) RLS â€” lock both tables. Only the service-role key (server) touches them;
 --    with no anon/authenticated policies, the Data API cannot read or write them.
-alter table public.autopilots     enable row level security;
-alter table public.autopilot_runs enable row level security;
+alter table public."autopilots_staxBNB"     enable row level security;
+alter table public."autopilot_runs_staxBNB" enable row level security;
 
--- 3) Atomic claim — advances next_run_at and resets the period spend AS IT READS,
+-- 3) Atomic claim â€” advances next_run_at and resets the period spend AS IT READS,
 --    so two overlapping cron runs can never execute the same autopilot twice.
 --    SECURITY INVOKER (default): only the service role (which bypasses RLS) can
 --    run it meaningfully; execute is revoked from the Data API roles below.
 create or replace function public.claim_due_autopilots(now_seconds bigint)
-returns setof public.autopilots
+returns setof public."autopilots_staxBNB"
 language sql
 set search_path = ''
 as $$
-  update public.autopilots a
+  update public."autopilots_staxBNB" a
   set next_run_at = a.next_run_at + case a.cadence
         when 'daily'    then 86400
         when 'weekly'   then 604800
@@ -67,7 +67,7 @@ $$;
 revoke all on function public.claim_due_autopilots(bigint) from public;
 grant execute on function public.claim_due_autopilots(bigint) to service_role;
 
--- 4) Scheduler — Supabase pg_cron fires the app's cron endpoint hourly via pg_net.
+-- 4) Scheduler â€” Supabase pg_cron fires the app's cron endpoint hourly via pg_net.
 --    EDIT the two placeholders, then run this block:
 --      <APP_URL>  = your CANONICAL deployed origin, no trailing slash.
 --                  IMPORTANT: use the domain that does NOT redirect. pg_net does not

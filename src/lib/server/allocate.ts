@@ -1,22 +1,28 @@
-import "server-only";
+﻿import "server-only";
 
-// buildAllocation — Vera's core allocation logic, shared by the interactive
+// buildAllocation â€” Vera's core allocation logic, shared by the interactive
 // /api/allocate route and the autonomous Autopilot executor. Turns a plain
 // goal + amount into a validated, normalized allocation over BUYABLE assets.
 import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { AllocationSchema, type Allocation } from "@/lib/allocation-schema";
 import { ALL_ASSETS } from "@/lib/chain";
 import { displayFor } from "@/lib/displayAssets";
 
-const MODEL = process.env.AI_MODEL || "claude-sonnet-4-6";
+// Groq (OpenAI-compatible endpoint). Override with AI_MODEL if needed.
+const groq = createOpenAICompatible({
+  name: "groq",
+  baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
+  apiKey: process.env.GROQ_API_KEY ?? "",
+});
+const MODEL = process.env.AI_MODEL || "openai/gpt-oss-120b";
 
 // Only assets that are actually buyable in one tap (exclude `coming` tiers).
 const BUYABLE = ALL_ASSETS.filter((a) => !displayFor(a.symbol).coming);
 const ALLOWED_SYMBOLS = new Set(BUYABLE.map((a) => a.symbol));
 
 function systemPrompt(): string {
-  const universe = BUYABLE.map((a) => `${a.symbol} — ${a.name} [${a.tier}]`).join("; ");
+  const universe = BUYABLE.map((a) => `${a.symbol} â€” ${a.name} [${a.tier}]`).join("; ");
   return [
     "You are Stax, an AI investing copilot on BNB Chain.",
     "You turn a person's plain-language goal into a concrete portfolio of REAL tokenized assets they can buy in one tap.",
@@ -29,7 +35,7 @@ function systemPrompt(): string {
     "- Diversify sensibly for the user's risk. Don't put everything in one volatile name unless they explicitly insist.",
     "- Map risk: broad ETFs ~3000-4500; single tech stocks ~5000-7000; crypto ~7000-9000. riskScore is the blended portfolio risk.",
     "- Explain like the user has never invested before. Warm, concrete, zero jargon. Briefly note that tokenized stocks track the real share price.",
-    "- Writing style for ALL text fields (summary, rationale, each reason): short plain sentences. NEVER use em dashes ('—') or double hyphens ('--'); use commas, periods, colons, or parentheses instead. No marketing buzzwords (supercharge, seamless, unleash, world-class, etc.). Don't restate the goal back; get to the substance.",
+    "- Writing style for ALL text fields (summary, rationale, each reason): short plain sentences. NEVER use em dashes ('â€”') or double hyphens ('--'); use commas, periods, colons, or parentheses instead. No marketing buzzwords (supercharge, seamless, unleash, world-class, etc.). Don't restate the goal back; get to the substance.",
   ].join("\n");
 }
 
@@ -43,7 +49,7 @@ export async function buildAllocation(
   riskTolerance?: string,
 ): Promise<Allocation> {
   const { object } = await generateObject({
-    model: anthropic(MODEL),
+    model: groq.chatModel(MODEL),
     schema: AllocationSchema,
     system: systemPrompt(),
     prompt: [
