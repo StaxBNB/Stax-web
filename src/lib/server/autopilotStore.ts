@@ -1,12 +1,12 @@
-﻿import "server-only";
+import "server-only";
 
-// Autopilot store â€” Supabase Postgres (durable source of truth).
-//   autopilots      one row per user: the config + run accounting.
-//   autopilot_runs  append-only audit log of every run (success/skipped/error).
+// Autopilot store — Supabase Postgres (durable source of truth).
+//   autopilots_staxBNB      one row per user: the config + run accounting.
+//   autopilot_runs_staxBNB  append-only audit log of every run (success/skipped/error).
 //
-// Scheduling safety: the cron claims due rows via claim_due_autopilots(), an
+// Scheduling safety: the cron claims due rows via claim_due_autopilots_staxBNB(), an
 // atomic UPDATE ... RETURNING that advances next_run_at (and resets the period
-// spend) as it reads â€” so two overlapping cron invocations can never run the same
+// spend) as it reads — so two overlapping cron invocations can never run the same
 // autopilot twice. recordRun() therefore never touches next_run_at; the claim owns
 // the schedule. See supabase/migrations/*_autopilot.sql.
 import type { AutopilotConfig } from "@/lib/autopilot";
@@ -85,7 +85,7 @@ export async function deleteAutopilot(userId: string): Promise<void> {
  * The returned configs already reflect the fresh period (spentThisPeriod = 0).
  */
 export async function claimDueAutopilots(nowSeconds: number): Promise<AutopilotConfig[]> {
-  const { data, error } = await supabaseAdmin().rpc("claim_due_autopilots", { now_seconds: nowSeconds });
+  const { data, error } = await supabaseAdmin().rpc("claim_due_autopilots_staxBNB", { now_seconds: nowSeconds });
   if (error) throw new Error(error.message);
   return ((data as Row[]) ?? []).map(rowToConfig);
 }

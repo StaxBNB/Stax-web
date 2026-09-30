@@ -1,6 +1,10 @@
-﻿-- Stax Autopilot â€” durable store, audit log, atomic claim, and scheduler.
--- Run in the Supabase SQL editor (Dashboard â†’ SQL) or via `supabase db push`.
+-- Stax Autopilot — durable store, audit log, and atomic claim.
+-- Applied to the shared Supabase project via MCP apply_migration ("staxBNB_autopilot").
 -- Safe to re-run (idempotent).
+--
+-- This project is SHARED with another app, so every Stax object ends in _staxBNB
+-- (tables, indexes, function) and no extensions are installed. Scheduling runs
+-- via Vercel Cron (vercel.json -> GET /api/cron/autopilot), not pg_cron.
 
 -- 1) Tables -----------------------------------------------------------------
 create table if not exists public."autopilots_staxBNB" (
@@ -21,7 +25,8 @@ create table if not exists public."autopilots_staxBNB" (
   runs               integer not null default 0,
   spent_this_period  numeric not null default 0
 );
-create index if not exists autopilots_due_idx on public."autopilots_staxBNB" (next_run_at) where active;
+create index if not exists "autopilots_due_idx_staxBNB"
+  on public."autopilots_staxBNB" (next_run_at) where active;
 
 create table if not exists public."autopilot_runs_staxBNB" (
   id                bigserial primary key,
@@ -35,18 +40,21 @@ create table if not exists public."autopilot_runs_staxBNB" (
   holdings          jsonb,                     -- what the run bought: [{symbol,weightPct,amountUsd}]
   created_at        timestamptz not null default now()
 );
-create index if not exists autopilot_runs_user_idx on public."autopilot_runs_staxBNB" (user_id, ran_at desc);
+create index if not exists "autopilot_runs_user_idx_staxBNB"
+  on public."autopilot_runs_staxBNB" (user_id, ran_at desc);
 
--- 2) RLS â€” lock both tables. Only the service-role key (server) touches them;
---    with no anon/authenticated policies, the Data API cannot read or write them.
+-- 2) Lock both tables. Only the server's secret key (service_role, bypasses RLS)
+--    touches them: RLS on with no policies, and no Data API grants for anon /
+--    authenticated.
 alter table public."autopilots_staxBNB"     enable row level security;
 alter table public."autopilot_runs_staxBNB" enable row level security;
+revoke all on table public."autopilots_staxBNB"     from anon, authenticated;
+revoke all on table public."autopilot_runs_staxBNB" from anon, authenticated;
 
--- 3) Atomic claim â€” advances next_run_at and resets the period spend AS IT READS,
+-- 3) Atomic claim — advances next_run_at and resets the period spend AS IT READS,
 --    so two overlapping cron runs can never execute the same autopilot twice.
---    SECURITY INVOKER (default): only the service role (which bypasses RLS) can
---    run it meaningfully; execute is revoked from the Data API roles below.
-create or replace function public.claim_due_autopilots(now_seconds bigint)
+--    SECURITY INVOKER (default): only service_role can run it meaningfully.
+create or replace function public."claim_due_autopilots_staxBNB"(now_seconds bigint)
 returns setof public."autopilots_staxBNB"
 language sql
 set search_path = ''
@@ -62,34 +70,7 @@ as $$
   where a.active and a.next_run_at <= now_seconds
   returning a.*;
 $$;
--- Lock execution to the server (service_role); remove the default PUBLIC grant
--- so anon/authenticated (Data API) can't call it.
-revoke all on function public.claim_due_autopilots(bigint) from public;
-grant execute on function public.claim_due_autopilots(bigint) to service_role;
-
--- 4) Scheduler â€” Supabase pg_cron fires the app's cron endpoint hourly via pg_net.
---    EDIT the two placeholders, then run this block:
---      <APP_URL>  = your CANONICAL deployed origin, no trailing slash.
---                  IMPORTANT: use the domain that does NOT redirect. pg_net does not
---                  follow redirects, so an apex->www (or www->apex) 308/301 makes the
---                  call land on the redirect and never reach the app (you'll see 401).
---                  e.g. https://www.stax.best  (NOT https://stax.best, which redirects)
---      <SECRET>   = the value of AUTOPILOT_CRON_SECRET in your app env
---    Tip: keep <SECRET> out of the job definition by storing it in Supabase Vault and
---    reading it inline, e.g.:
---      'Bearer ' || (select decrypted_secret from vault.decrypted_secrets
---                    where name = 'autopilot_cron_secret')
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
-
-select cron.unschedule('stax-autopilot') where exists (select 1 from cron.job where jobname = 'stax-autopilot');
-select cron.schedule(
-  'stax-autopilot',
-  '0 * * * *',           -- hourly; due autopilots run on their own cadence
-  $$
-    select net.http_get(
-      url     := '<APP_URL>/api/cron/autopilot',
-      headers := jsonb_build_object('Authorization', 'Bearer <SECRET>')
-    );
-  $$
-);
+-- Supabase's default privileges grant EXECUTE to anon/authenticated explicitly,
+-- so revoking from PUBLIC alone is not enough.
+revoke all on function public."claim_due_autopilots_staxBNB"(bigint) from public, anon, authenticated;
+grant execute on function public."claim_due_autopilots_staxBNB"(bigint) to service_role;
