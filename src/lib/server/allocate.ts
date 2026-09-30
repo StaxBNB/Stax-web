@@ -1,12 +1,12 @@
-﻿import "server-only";
+import "server-only";
 
-// buildAllocation â€” Vera's core allocation logic, shared by the interactive
+// buildAllocation — Vera's core allocation logic, shared by the interactive
 // /api/allocate route and the autonomous Autopilot executor. Turns a plain
 // goal + amount into a validated, normalized allocation over BUYABLE assets.
 import { generateObject } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { AllocationSchema, type Allocation } from "@/lib/allocation-schema";
-import { ALL_ASSETS } from "@/lib/chain";
+import { ALL_ASSETS, isRoutable } from "@/lib/chain";
 import { displayFor } from "@/lib/displayAssets";
 
 // Groq (OpenAI-compatible endpoint). Override with AI_MODEL if needed.
@@ -18,20 +18,27 @@ const groq = createOpenAICompatible({
 });
 const MODEL = process.env.AI_MODEL || "openai/gpt-oss-120b";
 
-// Only assets that are actually buyable in one tap (exclude `coming` tiers).
-const BUYABLE = ALL_ASSETS.filter((a) => !displayFor(a.symbol).coming);
+// Only assets that are actually buyable in one tap: not a `coming` tier AND with
+// a configured swap route on this chain (NEXT_PUBLIC_ASSET_ADDRESSES / ASSET_ROUTES).
+// Offering the model an unroutable asset lets it build a plan the executor can't
+// fill (the leg builder drops it, or rejects the whole plan if nothing is left).
+const BUYABLE = ALL_ASSETS.filter((a) => !displayFor(a.symbol).coming && isRoutable(a.symbol));
 const ALLOWED_SYMBOLS = new Set(BUYABLE.map((a) => a.symbol));
+const BROAD_ETFS = BUYABLE.filter((a) => a.symbol === "SPY" || a.symbol === "QQQ").map((a) => a.symbol);
 
 function systemPrompt(): string {
-  const universe = BUYABLE.map((a) => `${a.symbol} â€” ${a.name} [${a.tier}]`).join("; ");
+  const universe = BUYABLE.map((a) => `${a.symbol} — ${a.name} [${a.tier}]`).join("; ");
+  const safeHint = BROAD_ETFS.length
+    ? `lean on broad ETFs (${BROAD_ETFS.join(", ")})`
+    : "spread the money across the available names and keep the riskScore low";
   return [
     "You are Stax, an AI investing copilot on BNB Chain.",
     "You turn a person's plain-language goal into a concrete portfolio of REAL tokenized assets they can buy in one tap.",
     "",
     "RULES:",
     `- Allocate ONLY across these available assets: ${universe}.`,
-    "- Tiers: 'stock' = tokenized equities/ETFs (e.g. AAPL, TSLA, SPY, QQQ); 'crypto' = mETH / FBTC.",
-    "- There is no yield 'safe' dollar available right now. If the user wants to play it safe or keep some money low-risk, lean on broad ETFs (SPY, QQQ); never invent an asset that is not in the list above.",
+    "- Tiers: 'stock' = tokenized equities/ETFs; 'crypto' = tokenized crypto.",
+    `- There is no yield 'safe' dollar available right now. If the user wants to play it safe or keep some money low-risk, ${safeHint}; never invent an asset that is not in the list above.`,
     "- Weights MUST sum to exactly 100.",
     "- Diversify sensibly for the user's risk. Don't put everything in one volatile name unless they explicitly insist.",
     "- Map risk: broad ETFs ~3000-4500; single tech stocks ~5000-7000; crypto ~7000-9000. riskScore is the blended portfolio risk.",
@@ -50,6 +57,10 @@ export async function buildAllocation(
   amountUsd: number,
   riskTolerance?: string,
 ): Promise<Allocation> {
+  if (BUYABLE.length === 0) {
+    throw new Error("No buyable assets are configured (check NEXT_PUBLIC_ASSET_ADDRESSES).");
+  }
+
   const { object } = await generateObject({
     model: groq.chatModel(MODEL),
     schema: AllocationSchema,
