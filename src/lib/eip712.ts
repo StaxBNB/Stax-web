@@ -41,9 +41,12 @@ export interface RiskInferenceInput {
 }
 
 function agentAccount() {
-  const pk = process.env.AGENT_SIGNER_PRIVATE_KEY;
+  const pk = process.env.AGENT_SIGNER_PRIVATE_KEY?.trim();
   if (!pk) throw new Error("AGENT_SIGNER_PRIVATE_KEY is not configured.");
-  return privateKeyToAccount(pk as `0x${string}`);
+  // Accept the key with or without the 0x prefix (a bare 64-hex key is how most
+  // wallets export it, and viem rejects it without the prefix).
+  const hex = (pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`;
+  return privateKeyToAccount(hex);
 }
 
 /** The on-chain address that the verifier checks against (derived from the key). */
