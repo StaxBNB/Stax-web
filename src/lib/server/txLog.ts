@@ -15,7 +15,7 @@ import "server-only";
 // Triggers: lib/aa.ts (every sponsored UserOp sent from the browser, via
 // POST /api/tx-log) and the Autopilot executor (server-side runs).
 import { createPublicClient, decodeEventLog, formatUnits, http, parseAbiItem, type Hex, type Log } from "viem";
-import { CHAIN, RPC_URL, USDC, ALL_ASSETS, PANCAKE_V3_ROUTER } from "@/lib/chain";
+import { CHAIN, RPC_URL, USDC, ALL_ASSETS, PANCAKE_V3_ROUTER, IS_MAINNET } from "@/lib/chain";
 import { STAX_TREASURY } from "@/lib/fees";
 import {
   STAX_EXECUTOR,
@@ -289,12 +289,17 @@ function toWalletTx(r: DbRow): WalletTx {
     case "send":
     case "receive": {
       const a = r.kind === "send" ? firstOut : firstIn;
+      const symbol = a?.symbol ?? USDC.symbol;
+      // Tokens minted straight to the wallet (the testnet USDC faucet) come from
+      // the zero address — name it instead of showing "from 0x0000…0000".
+      const minted = r.kind === "receive" && r.counterparty === ZERO;
       return {
         ...base,
         direction: r.kind === "send" ? "out" : "in",
-        symbol: a?.symbol ?? USDC.symbol,
+        symbol,
         amount: Number(a?.amount ?? 0),
         tokenAddress: a?.token ?? "",
+        ...(minted ? { label: IS_MAINNET ? `${symbol} minted` : `Test ${symbol} added`, counterparty: "" } : {}),
       };
     }
     default:
