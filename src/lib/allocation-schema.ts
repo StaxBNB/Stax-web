@@ -33,7 +33,7 @@ export type Allocation = z.infer<typeof AllocationSchema>;
 
 /** Request body for POST /api/allocate */
 export const AllocateRequestSchema = z.object({
-  // Bounded length: caps Anthropic token spend and shrinks the prompt-injection
+  // Bounded length: caps AI token spend and shrinks the prompt-injection
   // surface (a goal can't smuggle in a multi-KB instruction payload).
   goal: z.string().min(1, "Tell the AI what you want.").max(600, "Keep your goal under 600 characters."),
   amountUsd: z.number().positive().max(1_000_000, "That amount is too large."),

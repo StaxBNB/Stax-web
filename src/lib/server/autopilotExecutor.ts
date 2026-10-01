@@ -58,7 +58,7 @@ export async function runAutopilot(
   const availableUsd = rawToUsd(bal);
 
   // 2. Vera re-allocates for the saved goal.
-  const allocation = await buildAllocation(working.goal, working.amountUsd);
+  const { allocation } = await buildAllocation(working.goal, working.amountUsd);
   const assessedRiskBps = Math.max(0, Math.min(RISK_CEILING_BPS, Math.round(allocation.riskScore)));
 
   // 3. Hard bounds gate — the safety guarantee. Nothing below runs if this fails.

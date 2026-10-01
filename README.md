@@ -7,9 +7,10 @@ for what Stax is, the verifiable AI × on-chain loop, deployed contract addresse
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in the keys (Privy, Pimlico, Groq, agent signer, Supabase, contract addresses)
+cp .env.example .env.local   # fill in the keys (Privy, Pimlico, xKiro/QwenCloud, agent signer, Supabase, contract addresses)
 npm run dev                  # http://localhost:3000  ·  /app is the product
 ```
 
 Scripts: `dev` · `build` · `start` · `lint`. Stack: Next.js 16 (App Router) · Tailwind v4 ·
-Privy · Pimlico/permissionless (gasless ERC-4337) · viem/wagmi · Groq via the AI SDK · Supabase · Framer Motion.
+Privy · Pimlico/permissionless (gasless ERC-4337) · viem/wagmi · AI SDK (Anthropic provider → xKiro / QwenCloud
+gateways, model fallback chain) · Supabase · Framer Motion.

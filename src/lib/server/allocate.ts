@@ -3,20 +3,104 @@ import "server-only";
 // buildAllocation — Vera's core allocation logic, shared by the interactive
 // /api/allocate route and the autonomous Autopilot executor. Turns a plain
 // goal + amount into a validated, normalized allocation over BUYABLE assets.
+//
+// Models are reached through Anthropic-compatible gateways with the AI SDK's
+// Anthropic provider (structured output = a forced `json` tool call):
+//   xkiro      https://api.xkiro.com/v1                                    XKIRO_API_KEY
+//   qwencloud  https://token-plan.maas.qwencloudapi.com/apps/anthropic/v1  QWEN_API_KEY (Token Plan key, sk-sp-…)
+// They are tried in order (AI_MODELS overrides the default chain). Fast/free
+// models can be rate-limited, slow, or answer off-schema, so any failure falls
+// through to the next model instead of failing the user's plan.
 import { generateObject } from "ai";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { AllocationSchema, type Allocation } from "@/lib/allocation-schema";
 import { ALL_ASSETS, isRoutable } from "@/lib/chain";
 import { displayFor } from "@/lib/displayAssets";
 
-// Groq (OpenAI-compatible endpoint). Override with AI_MODEL if needed.
-const groq = createOpenAICompatible({
-  name: "groq",
-  baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
-  apiKey: process.env.GROQ_API_KEY ?? "",
-  supportsStructuredOutputs: true,
-});
-const MODEL = process.env.AI_MODEL || "openai/gpt-oss-120b";
+const PROVIDERS = {
+  xkiro: {
+    baseURL: process.env.XKIRO_BASE_URL || "https://api.xkiro.com/v1",
+    apiKey: process.env.XKIRO_API_KEY,
+    disableThinking: false,
+  },
+  qwencloud: {
+    baseURL: process.env.QWEN_BASE_URL || "https://token-plan.maas.qwencloudapi.com/apps/anthropic/v1",
+    apiKey: process.env.QWEN_API_KEY,
+    // QwenCloud runs its models in thinking mode by default, and thinking mode
+    // rejects a forced tool_choice ("does not support being set to required or
+    // object in thinking mode") — which is how the SDK gets structured output.
+    // Turning it off also cuts latency (DeepSeek ~2.4s -> ~1.8s).
+    disableThinking: true,
+  },
+} as const;
+type ProviderName = keyof typeof PROVIDERS;
+
+/**
+ * Default fallback chain ("provider/model-id", tried in order), measured
+ * 2026-10-01 on the real allocation prompt: fastest first, providers
+ * interleaved so one slow/down gateway never blocks the other.
+ *   qwencloud/deepseek-v4-flash-0731   ~2-3s
+ *   xkiro/qwen/qwen3.8-omni-flash:free ~5-6s
+ *   qwencloud/qwen3.8-flash            ~3s (needs thinking off)
+ *   xkiro/z-ai/glm-5.3-flash           ~8s
+ *   xkiro/xiaomi/mimo-v2.6-flash:free  returned HTTP 500 for every request that day (kept last)
+ */
+const DEFAULT_MODELS = [
+  "qwencloud/deepseek-v4-flash-0731",
+  "xkiro/qwen/qwen3.8-omni-flash:free",
+  "qwencloud/qwen3.8-flash",
+  "xkiro/z-ai/glm-5.3-flash",
+  "xkiro/xiaomi/mimo-v2.6-flash:free",
+];
+export const AI_MODELS = (process.env.AI_MODELS || DEFAULT_MODELS.join(","))
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/** Per-model budget, so one slow model can't stall the whole chain. */
+const ATTEMPT_TIMEOUT_MS = 25_000;
+
+const clients = new Map<ProviderName, ReturnType<typeof createAnthropic>>();
+
+/**
+ * The Anthropic SDK only sends `thinking` when it is enabled; it omits the field
+ * for "disabled". A gateway that defaults to thinking therefore needs the
+ * explicit `{ type: "disabled" }` added to the request body on the wire.
+ */
+const fetchWithThinkingDisabled: typeof fetch = (input, init) => {
+  if (typeof init?.body === "string") {
+    try {
+      const body = JSON.parse(init.body);
+      if (body && typeof body === "object" && body.thinking === undefined) {
+        init = { ...init, body: JSON.stringify({ ...body, thinking: { type: "disabled" } }) };
+      }
+    } catch {
+      /* not JSON: send as-is */
+    }
+  }
+  return fetch(input, init);
+};
+
+/** "xkiro/z-ai/glm-5.3-flash" -> the xkiro client's "z-ai/glm-5.3-flash" model. */
+function modelFor(entry: string) {
+  const slash = entry.indexOf("/");
+  const provider = entry.slice(0, slash) as ProviderName;
+  const modelId = entry.slice(slash + 1);
+  const cfg = PROVIDERS[provider];
+  if (slash < 1 || !cfg) throw new Error(`Unknown AI provider in "${entry}" (expected xkiro/… or qwencloud/…).`);
+  if (!cfg.apiKey) throw new Error(`${provider} API key is not configured.`);
+  let client = clients.get(provider);
+  if (!client) {
+    client = createAnthropic({
+      baseURL: cfg.baseURL,
+      apiKey: cfg.apiKey,
+      name: provider,
+      ...(cfg.disableThinking ? { fetch: fetchWithThinkingDisabled } : {}),
+    });
+    clients.set(provider, client);
+  }
+  return client(modelId);
+}
 
 // Only assets that are actually buyable in one tap: not a `coming` tier AND with
 // a configured swap route on this chain (NEXT_PUBLIC_ASSET_ADDRESSES / ASSET_ROUTES).
@@ -48,42 +132,61 @@ function systemPrompt(): string {
   ].join("\n");
 }
 
-/**
- * Build a validated allocation. Throws if the model can't produce a usable plan.
- * Weights are filtered to known symbols and normalized to sum to 100.
- */
-export async function buildAllocation(
-  goal: string,
-  amountUsd: number,
-  riskTolerance?: string,
-): Promise<Allocation> {
-  if (BUYABLE.length === 0) {
-    throw new Error("No buyable assets are configured (check NEXT_PUBLIC_ASSET_ADDRESSES).");
-  }
-
-  const { object } = await generateObject({
-    model: groq.chatModel(MODEL),
-    schema: AllocationSchema,
-    system: systemPrompt(),
-    prompt: [
-      `Goal: ${goal}`,
-      `Amount to invest: $${amountUsd}`,
-      `Risk preference: ${riskTolerance ?? "infer from the goal"}`,
-      "Build the allocation now.",
-    ].join("\n"),
-  });
-
+/** Keep known symbols only and re-normalize weights to 100. Throws if nothing usable is left. */
+function normalize(object: Allocation): Allocation {
   const filtered = object.allocations.filter((a) => ALLOWED_SYMBOLS.has(a.symbol));
   if (filtered.length === 0) {
     throw new Error("Could not build a valid allocation. Try rephrasing the goal.");
   }
   const total = filtered.reduce((s, a) => s + a.weightPct, 0);
-  const normalized = filtered.map((a) => ({
+  const allocations = filtered.map((a) => ({
     ...a,
     weightPct: total > 0 ? Math.round((a.weightPct / total) * 10000) / 100 : 0,
   }));
-
-  return { ...object, allocations: normalized };
+  return { ...object, allocations };
 }
 
-export { MODEL as ALLOCATE_MODEL };
+export interface AllocationResult {
+  allocation: Allocation;
+  /** The "provider/model" entry that produced it. */
+  model: string;
+}
+
+/**
+ * Build a validated allocation, walking the model chain until one succeeds.
+ * Throws only if every model fails (each failure is logged server-side).
+ */
+export async function buildAllocation(
+  goal: string,
+  amountUsd: number,
+  riskTolerance?: string,
+): Promise<AllocationResult> {
+  if (BUYABLE.length === 0) {
+    throw new Error("No buyable assets are configured (check NEXT_PUBLIC_ASSET_ADDRESSES).");
+  }
+
+  const failures: string[] = [];
+  for (const entry of AI_MODELS) {
+    try {
+      const { object } = await generateObject({
+        model: modelFor(entry),
+        schema: AllocationSchema,
+        system: systemPrompt(),
+        prompt: [
+          `Goal: ${goal}`,
+          `Amount to invest: $${amountUsd}`,
+          `Risk preference: ${riskTolerance ?? "infer from the goal"}`,
+          "Build the allocation now.",
+        ].join("\n"),
+        maxRetries: 0, // the chain is the retry
+        abortSignal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+      });
+      return { allocation: normalize(object), model: entry };
+    } catch (err) {
+      const msg = (err instanceof Error ? err.message : String(err)).replace(/\s+/g, " ").slice(0, 200);
+      failures.push(`${entry}: ${msg}`);
+      console.warn(`[allocate] ${entry} failed, trying the next model: ${msg}`);
+    }
+  }
+  throw new Error(`Every AI model failed. ${failures.join(" | ")}`);
+}
