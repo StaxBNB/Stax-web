@@ -2155,7 +2155,38 @@ body {
    brief: docs/design/hero.md). Link colours are set here, unlayered and scoped,
    because `.site a { color: inherit }` above beats Tailwind's layered utilities.
    =========================================================================== */
-.font-garamond { font-family: "Garamond", "Times New Roman", serif; }
+/* Headline: the same display treatment as the section below ("Own the world's
+   best companies." — .site .hero h1 + .hero-em), sized up for the full-screen act. */
+.site .cine-hero .cine-title {
+  font-family: var(--s-display);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.site .cine-hero .cine-em { font-style: italic; font-weight: 500; color: var(--s-primary); }
+
+/* Bottom hand-off, two layers:
+   1. the hero itself dissolves to transparent over its last ~38%, so the page's
+      own backdrop (paper + mesh + glow orbs, light or dark) shows through and
+      there is no seam where the next section begins;
+   2. .cine-fade blurs the video progressively (its mask ramps the blur in)
+      across the same band, so the edge softens instead of just going dim.
+   Both ramps are smoothstep-eased (flat at each end): a plain linear ramp leaves
+   a faint line (Mach band) where it meets the flat paper. The mobile menu is
+   rendered outside the section, so this mask never clips it. */
+.site .cine-hero {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, rgb(0 0 0 / 0.96) 66.75%, rgb(0 0 0 / 0.84) 71.5%, rgb(0 0 0 / 0.68) 76.25%, rgb(0 0 0 / 0.5) 81%, rgb(0 0 0 / 0.32) 85.75%, rgb(0 0 0 / 0.16) 90.5%, rgb(0 0 0 / 0.04) 95.25%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 62%, rgb(0 0 0 / 0.96) 66.75%, rgb(0 0 0 / 0.84) 71.5%, rgb(0 0 0 / 0.68) 76.25%, rgb(0 0 0 / 0.5) 81%, rgb(0 0 0 / 0.32) 85.75%, rgb(0 0 0 / 0.16) 90.5%, rgb(0 0 0 / 0.04) 95.25%, transparent 100%);
+}
+.site .cine-hero .cine-fade {
+  height: 40%;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 0.16) 15%, rgb(0 0 0 / 0.5) 30%, rgb(0 0 0 / 0.84) 45%, #000 60%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 0.16) 15%, rgb(0 0 0 / 0.5) 30%, rgb(0 0 0 / 0.84) 45%, #000 60%);
+}
 
 .site .cine-hero {
   background: #010101;

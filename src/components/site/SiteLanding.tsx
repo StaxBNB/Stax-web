@@ -638,12 +638,6 @@ export function SiteLanding() {
             <span>© 2026 Stax. Stocks can go down as well as up, only invest what you can leave for a while.</span>
             <span className="mono">Not investment advice · Capital at risk</span>
           </div>
-          <div className="footer-bottom" style={{ marginTop: 6, opacity: 0.7, fontSize: 12 }}>
-            {/* CC BY 4.0 attribution for the hero's Garamond webfont. */}
-            <span>
-              Garamond font from <a href="https://www.onlinewebfonts.com/fonts" target="_blank" rel="noopener noreferrer">Web Fonts</a>, licensed CC BY 4.0
-            </span>
-          </div>
         </div>
       </footer>
 
