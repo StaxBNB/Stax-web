@@ -10,8 +10,9 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-const FILM_URL =
-  "https://vjihfnxndqxgddybpqzk.supabase.co/storage/v1/object/public/media/stax-promo.mp4";
+// The BNB Chain demo film (with voice-over), served from /public — no
+// third-party storage dependency.
+const FILM_URL = "/stax-film.mp4";
 
 export function FilmLightbox({ onClose }: { onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
