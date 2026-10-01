@@ -112,9 +112,11 @@ const BROAD_ETFS = BUYABLE.filter((a) => a.symbol === "SPY" || a.symbol === "QQQ
 
 function systemPrompt(): string {
   const universe = BUYABLE.map((a) => `${a.symbol} — ${a.name} [${a.tier}]`).join("; ");
+  // With no broad ETF to lean on, Vera must not dress up a stock slice as "safe" or
+  // shade the riskScore down: it is signed into the on-chain risk gate.
   const safeHint = BROAD_ETFS.length
     ? `lean on broad ETFs (${BROAD_ETFS.join(", ")})`
-    : "spread the money across the available names and keep the riskScore low";
+    : "spread the money across the available names and say plainly, in one short sentence, that a lower-risk option is not available yet. Never call a stock slice 'safe', and keep the riskScore true to the assets you chose";
   return [
     "You are Stax, an AI investing copilot on BNB Chain.",
     "You turn a person's plain-language goal into a concrete portfolio of REAL tokenized assets they can buy in one tap.",
@@ -124,6 +126,7 @@ function systemPrompt(): string {
     "- Tiers: 'stock' = tokenized equities/ETFs; 'crypto' = tokenized crypto.",
     `- There is no yield 'safe' dollar available right now. If the user wants to play it safe or keep some money low-risk, ${safeHint}; never invent an asset that is not in the list above.`,
     "- Weights MUST sum to exactly 100.",
+    "- List each asset at most once (one entry per symbol).",
     "- Diversify sensibly for the user's risk. Don't put everything in one volatile name unless they explicitly insist.",
     "- Map risk: broad ETFs ~3000-4500; single tech stocks ~5000-7000; crypto ~7000-9000. riskScore is the blended portfolio risk.",
     "- Explain like the user has never invested before. Warm, concrete, zero jargon. Briefly note that tokenized stocks track the real share price.",
@@ -132,9 +135,19 @@ function systemPrompt(): string {
   ].join("\n");
 }
 
-/** Keep known symbols only and re-normalize weights to 100. Throws if nothing usable is left. */
+/**
+ * Keep known symbols with a positive weight, merge a symbol the model listed more
+ * than once (one row, one swap leg per asset; its first reason wins), and
+ * re-normalize weights to 100. Throws if nothing usable is left.
+ */
 function normalize(object: Allocation): Allocation {
-  const filtered = object.allocations.filter((a) => ALLOWED_SYMBOLS.has(a.symbol));
+  const bySymbol = new Map<string, Allocation["allocations"][number]>();
+  for (const a of object.allocations) {
+    if (!ALLOWED_SYMBOLS.has(a.symbol) || !(a.weightPct > 0)) continue;
+    const prev = bySymbol.get(a.symbol);
+    bySymbol.set(a.symbol, prev ? { ...prev, weightPct: prev.weightPct + a.weightPct } : { ...a });
+  }
+  const filtered = [...bySymbol.values()];
   if (filtered.length === 0) {
     throw new Error("Could not build a valid allocation. Try rephrasing the goal.");
   }
