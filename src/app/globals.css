@@ -396,8 +396,8 @@
    where the backdrop blur actually reads. Inherits the pointer sheen above. */
 .stax .btn-glass {
   background: var(--glass);
-  backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--glass-stroke), var(--glass-hi), 0 10px 26px -12px rgba(0, 0, 0, 0.3);
 }
@@ -409,8 +409,8 @@
 /* reusable liquid-glass surface for divs / cards / chrome that sit over content */
 .stax .glass {
   background: var(--glass);
-  backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   box-shadow: inset 0 0 0 1px var(--glass-stroke), var(--glass-hi);
 }
 
@@ -1153,8 +1153,8 @@ body {
 /* glass primitive */
 .site .glass {
   background: var(--s-glass);
-  backdrop-filter: var(--s-glass-blur);
   -webkit-backdrop-filter: var(--s-glass-blur);
+  backdrop-filter: var(--s-glass-blur);
   border: 1px solid var(--s-glass-line);
   box-shadow: var(--s-glass-hi), var(--s-glass-shadow);
   border-radius: var(--s-r-lg);
@@ -1198,7 +1198,7 @@ body {
 }
 .site .btn-primary { background: var(--s-hero-grad); color: #fff; box-shadow: var(--s-glass-hi), 0 8px 22px color-mix(in srgb, var(--s-primary) 40%, transparent); }
 .site .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--s-glass-hi), 0 14px 30px color-mix(in srgb, var(--s-primary) 50%, transparent); filter: brightness(1.04); }
-.site .btn-glass { background: var(--s-glass-strong); backdrop-filter: var(--s-glass-blur); -webkit-backdrop-filter: var(--s-glass-blur); color: var(--s-ink); border: 1px solid var(--s-glass-line); box-shadow: var(--s-glass-hi); }
+.site .btn-glass { background: var(--s-glass-strong); -webkit-backdrop-filter: var(--s-glass-blur); backdrop-filter: var(--s-glass-blur); color: var(--s-ink); border: 1px solid var(--s-glass-line); box-shadow: var(--s-glass-hi); }
 .site .btn-glass:hover { transform: translateY(-2px); box-shadow: var(--s-glass-hi), var(--s-shadow); }
 .site .btn-sm { height: 44px; padding: 0 20px; font-size: 14.5px; }
 .site .btn:active { transform: scale(0.97); }
@@ -1225,8 +1225,8 @@ body {
   padding: 11px 14px 11px 22px;
   border-radius: 99px;
   background: var(--s-glass-strong);
-  backdrop-filter: var(--s-glass-blur);
   -webkit-backdrop-filter: var(--s-glass-blur);
+  backdrop-filter: var(--s-glass-blur);
   border: 1px solid var(--s-glass-line);
   box-shadow: var(--s-glass-hi), var(--s-glass-shadow);
   transition: background 0.3s var(--s-ease);
@@ -1678,8 +1678,8 @@ body {
   place-items: center;
   padding: 20px;
   background: rgba(8, 11, 8, 0.84);
-  backdrop-filter: blur(18px) saturate(120%);
   -webkit-backdrop-filter: blur(18px) saturate(120%);
+  backdrop-filter: blur(18px) saturate(120%);
   animation: filmIn 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .film-lb-frame {
@@ -1906,8 +1906,8 @@ body {
   padding: 10px 18px 10px 11px;
   border-radius: 16px;
   background: var(--s-glass);
-  backdrop-filter: var(--s-glass-blur);
   -webkit-backdrop-filter: var(--s-glass-blur);
+  backdrop-filter: var(--s-glass-blur);
   border: 1px solid var(--s-glass-line);
   box-shadow: var(--s-glass-hi);
   white-space: nowrap;
@@ -1964,8 +1964,8 @@ body {
   padding: 9px 19px 9px 11px;
   border-radius: 99px;
   background: var(--s-glass);
-  backdrop-filter: var(--s-glass-blur);
   -webkit-backdrop-filter: var(--s-glass-blur);
+  backdrop-filter: var(--s-glass-blur);
   border: 1px solid var(--s-glass-line);
   box-shadow: var(--s-glass-hi);
 }
@@ -2149,3 +2149,69 @@ body {
   .site .goal-quote { transition: none; transform: none; }
   .site .hero-showcase .phone { transition: none; }
 }
+
+/* ===========================================================================
+   Cinematic hero — the landing's opening act (components/site/CinematicHero,
+   brief: docs/design/hero.md). Link colours are set here, unlayered and scoped,
+   because `.site a { color: inherit }` above beats Tailwind's layered utilities.
+   =========================================================================== */
+.font-garamond { font-family: "Garamond", "Times New Roman", serif; }
+
+.site .cine-hero {
+  background: #010101;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.site .cine-hero a.cine-brand { color: #fff; }
+.site .cine-hero a.cine-link { color: rgb(255 255 255 / 0.8); transition: color 0.3s; }
+.site .cine-hero a.cine-link:hover { color: #fff; }
+.site .cine-hero .cine-toggle { color: #fff; background: none; border: 0; padding: 4px; cursor: pointer; }
+.site .mobile-menu-glass a.cine-mlink { color: rgb(255 255 255 / 0.9); transition: color 0.3s; }
+.site .mobile-menu-glass a.cine-mlink:hover { color: #fff; }
+.site .cine-hero a.liquid-glass { color: rgb(255 255 255 / 0.9); }
+
+.mobile-menu-glass {
+  background: rgba(10, 10, 10, 0.7);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.15s;
+}
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0.15) 80%,
+    rgba(255, 255, 255, 0.45) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.liquid-glass:hover {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+.liquid-glass:active { transform: scale(0.98); }

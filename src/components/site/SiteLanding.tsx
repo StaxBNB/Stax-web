@@ -9,14 +9,14 @@
 // All CTAs route to /app.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles, Sun, Moon, Menu, KeyRound, Zap, BadgeCheck, ChevronDown, Play } from "lucide-react";
+import { ArrowRight, Sun, Moon, Menu, KeyRound, Zap, BadgeCheck, ChevronDown, Play } from "lucide-react";
 import { displayFor } from "@/lib/displayAssets";
 import { FAQ } from "@/lib/faq";
 import { DemoMount } from "@/components/demo/DemoMount";
 import type { DemoPlay } from "@/components/demo/DemoProvider";
 import { PhoneChrome } from "@/components/site/PhoneChrome";
-import { LoopVideo } from "@/components/site/LoopVideo";
 import { FilmLightbox } from "@/components/site/FilmLightbox";
+import { CinematicHero } from "@/components/site/CinematicHero";
 
 type Mode = "light" | "dark";
 
@@ -250,23 +250,31 @@ export function SiteLanding() {
     counters.forEach((el) => countIO.observe(el));
 
     const nav = root.querySelector<HTMLElement>(".nav");
+    const hero = root.querySelector<HTMLElement>(".cine-hero");
     let lastY = 0;
     let ticking = false;
+    const placeNav = () => {
+      const y = window.scrollY;
+      if (nav) {
+        // The cinematic hero carries its own nav: keep the pill tucked away
+        // until the hero is (mostly) scrolled past, then hide-on-scroll-down.
+        const overHero = hero ? y < hero.offsetHeight * 0.85 : false;
+        nav.style.top = overHero || (y > 200 && y > lastY) ? "-110px" : "14px";
+        // solid once scrolled onto page content (otherwise the hero text bleeds
+        // through the translucent pill).
+        nav.dataset.solid = y > window.innerHeight * 0.7 ? "1" : "";
+      }
+      lastY = y;
+    };
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        const y = window.scrollY;
-        if (nav) {
-          nav.style.top = y > 200 && y > lastY ? "-110px" : "14px";
-          // glass over the opening video; solid once scrolled onto page content
-          // (otherwise the hero text bleeds through the translucent pill).
-          nav.dataset.solid = y > window.innerHeight * 0.7 ? "1" : "";
-        }
-        lastY = y;
+        placeNav();
         ticking = false;
       });
     };
+    placeNav(); // start tucked away over the hero
     window.addEventListener("scroll", onScroll, { passive: true });
 
     // Liquid Glass: the specular sheen on glass buttons tracks the pointer.
@@ -328,7 +336,7 @@ export function SiteLanding() {
       const ScrollTrigger = stMod.ScrollTrigger ?? stMod.default;
       gsap.registerPlugin(ScrollTrigger);
       const ctx = gsap.context(() => {
-        const parts = gsap.utils.toArray<HTMLElement>(root.querySelectorAll(".hero, .video-sec, #vera, #how"));
+        const parts = gsap.utils.toArray<HTMLElement>(root.querySelectorAll(".cine-hero, .hero, .video-sec, #vera, #how"));
         parts.forEach((sec) => {
           gsap.to(sec, {
             opacity: 0,
@@ -384,26 +392,9 @@ export function SiteLanding() {
 
       <span id="top" />
 
-      {/* VIDEO — full-bleed product film, the opening act; copy overlaid on top.
-          (drop the file at public/stax.mp4) */}
-      <section className="video-sec video-first reveal" id="video">
-        <div className="video-frame">
-          <LoopVideo className="video-el" src="/stax.mp4" />
-          <div className="video-overlay">
-            <div className="video-copy">
-              <span className="eyebrow"><Sparkles size={14} strokeWidth={1.9} /> Real shares, in plain words</span>
-              <div className="serif video-title">Just <em>say</em> what you want.</div>
-              <p>Vera turns your goal into a real mix of companies you know, then places it in one tap. Gas-free, and signed on-chain.</p>
-              <div className="video-ctas">
-                <Link className="btn btn-glass" href="/app">Open the app <Arrow size={16} /></Link>
-                <button className="btn btn-glass" onClick={() => setFilmOpen(true)}>
-                  <Play size={15} strokeWidth={2.4} /> Watch the film <span className="film-len">30s</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* CINEMATIC HERO — full-screen opening act (own nav; the glass pill above
+          only appears once this is scrolled past). Brief: docs/design/hero.md */}
+      <CinematicHero />
 
       {/* HERO — centered (Plasma-style): headline + CTA on top, then a large phone
           with benefit callouts at the four corners. */}
@@ -415,6 +406,9 @@ export function SiteLanding() {
             <div className="hero-cta reveal" data-d="3">
               <Link className="btn btn-primary" href="/app">Start Investing <Arrow /></Link>
               <Link className="btn btn-glass" href="/demo">Try the live demo</Link>
+              <button className="btn btn-glass" onClick={() => setFilmOpen(true)}>
+                <Play size={15} strokeWidth={2.4} /> Watch the film <span className="film-len">66s</span>
+              </button>
             </div>
           </div>
 
@@ -515,7 +509,10 @@ export function SiteLanding() {
               <p>Describe a goal in a sentence. Vera turns it into a real, diversified portfolio you actually understand.</p>
               <div className="feat-proof bc-chat">
                 <span className="bc-you">Something safe-ish that still grows</span>
-                <span className="bc-vera">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/brand/vera.png" alt="" /> A balanced mix, 20% kept safe →</span>
+                <span className="bc-vera">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/brand/vera.png" alt="" /> A balanced mix, 20% kept safe →
+                </span>
               </div>
             </div>
 
@@ -634,12 +631,18 @@ export function SiteLanding() {
             </div>
             <div>
               <h4>Connect</h4>
-              <a href="https://x.com/stax_market" target="_blank" rel="noreferrer">@stax_market on X</a>
+              <a href="https://x.com/HGunawan07" target="_blank" rel="noreferrer">@HGunawan07 on X</a>
             </div>
           </div>
           <div className="footer-bottom">
             <span>© 2026 Stax. Stocks can go down as well as up, only invest what you can leave for a while.</span>
             <span className="mono">Not investment advice · Capital at risk</span>
+          </div>
+          <div className="footer-bottom" style={{ marginTop: 6, opacity: 0.7, fontSize: 12 }}>
+            {/* CC BY 4.0 attribution for the hero's Garamond webfont. */}
+            <span>
+              Garamond font from <a href="https://www.onlinewebfonts.com/fonts" target="_blank" rel="noopener noreferrer">Web Fonts</a>, licensed CC BY 4.0
+            </span>
           </div>
         </div>
       </footer>
