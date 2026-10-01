@@ -7,7 +7,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSessionSigners, usePrivy } from "@privy-io/react-auth";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
-import { useUsdcBalance } from "@/hooks/useBalances";
+import { useUsdcBalance, useRefreshBalances } from "@/hooks/useBalances";
 import { useToast, Icon, Seal, BottomSheet } from "@/components/design";
 import { TokenLogo } from "@/components/lite/TokenLogo";
 import { displayFor } from "@/lib/displayAssets";
@@ -55,6 +55,7 @@ export function AutopilotScreen({
   const { user } = usePrivy();
   const { address: smartAccount } = useSmartAccount();
   const { data: bal } = useUsdcBalance(smartAccount ?? undefined);
+  const refreshBalances = useRefreshBalances();
   const cash = bal?.value ?? 0;
   const { addSessionSigners, removeSessionSigners } = useSessionSigners();
   const { notify } = useToast();
@@ -236,6 +237,7 @@ export function AutopilotScreen({
       } else {
         haptic.success();
         notify("Vera invested for you", "check");
+        refreshBalances(); // the run spent cash: refresh "available", holdings, history
         try {
           const r = await fetch("/api/autopilot", { headers: { ...(await authHeader()) } });
           const j = await r.json();

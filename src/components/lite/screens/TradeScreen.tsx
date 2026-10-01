@@ -90,6 +90,7 @@ export function TradeScreen({
     if (swap.phase === "done" && swap.result) {
       const isSell = swap.result.side === "sell";
       go("receipt", {
+        kind: isSell ? "sell" : "buy",
         title: `${isSell ? "Sold" : "Bought"} ${swap.result.asset.name}`,
         amount: isSell ? swap.result.amountUsd : -swap.result.amountUsd,
         txHash: swap.result.txHash,

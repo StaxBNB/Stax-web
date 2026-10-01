@@ -32,7 +32,7 @@ import { PortfolioScreen } from "./screens/PortfolioScreen";
 import { MarketScreen } from "./screens/MarketScreen";
 import { AssetDetailScreen } from "./screens/AssetDetailScreen";
 import { TradeScreen } from "./screens/TradeScreen";
-import { ReceiptScreen } from "./screens/ReceiptScreen";
+import { ReceiptScreen, type ReceiptKind } from "./screens/ReceiptScreen";
 import { VeraScreen } from "./screens/VeraScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { ActivityScreen } from "./screens/ActivityScreen";
@@ -399,6 +399,7 @@ export function LiteApp({ demoPlay = null }: { demoPlay?: "invest" | "vera" | nu
       view = (
         <ReceiptScreen
           go={go}
+          kind={params.kind as ReceiptKind | undefined}
           title={params.title as string | undefined}
           amount={params.amount as number | undefined}
           txHash={params.txHash as string | undefined}

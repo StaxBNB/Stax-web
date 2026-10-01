@@ -120,7 +120,9 @@ export function SendScreen({
           </a>
         </div>
         <div style={{ padding: "0 22px calc(20px + env(safe-area-inset-bottom))" }}>
-          <button className="btn btn-primary btn-block btn-lg tap" onClick={() => go("wallet")}>Done</button>
+          {/* Pop back to where Send was opened (the Wallet) instead of pushing a new
+              Wallet route — otherwise Back would land on this finished Send form. */}
+          <button className="btn btn-primary btn-block btn-lg tap" onClick={() => go(-1)}>Done</button>
         </div>
       </div>
     );

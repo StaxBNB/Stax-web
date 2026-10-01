@@ -7,8 +7,11 @@ import { Icon, Seal } from "@/components/design";
 import { usd, txUrl } from "@/lib/format";
 import { iconBtn } from "./primitives";
 
+export type ReceiptKind = "invest" | "buy" | "sell";
+
 export function ReceiptScreen({
   go,
+  kind = "invest",
   title = "Invested in a plan",
   amount,
   txHash,
@@ -16,6 +19,8 @@ export function ReceiptScreen({
   date = "Today, just now",
 }: {
   go: (target: string | number, params?: Record<string, unknown>) => void;
+  /** invest = a plan Vera signed; buy/sell = a manual trade (not part of her record). */
+  kind?: ReceiptKind;
   title?: string;
   amount?: number;
   txHash?: string;
@@ -25,6 +30,13 @@ export function ReceiptScreen({
   // Live receipts have a real tx; sample records only have an illustrative ref.
   const explorerHref = txHash ? txUrl(txHash) : undefined;
   const showAmount = amount !== undefined;
+  const details: (readonly [string, string])[] =
+    kind === "sell"
+      ? [["Paid into", "Your Stax balance"]]
+      : [
+          ["Paid from", "Your Stax balance"],
+          ["Ownership", "Real shares, held by you"],
+        ];
 
   return (
     <div className="screen screen-pad-top" style={{ paddingBottom: 30 }}>
@@ -68,8 +80,7 @@ export function ReceiptScreen({
             [
               ["Status", <span key="s" style={{ color: "var(--pos)", fontWeight: 600 }}>Completed</span>],
               ["Network cost", <span key="n" style={{ color: "var(--pos)", fontWeight: 600 }}>Free</span>],
-              ["Paid from", "Your Stax balance"],
-              ["Ownership", "Real shares, held by you"],
+              ...details,
             ] as const
           ).map(([k, v], i, arr) => (
             <div
@@ -96,10 +107,18 @@ export function ReceiptScreen({
             <Seal size={30} />
           </div>
           <div style={{ fontWeight: 700, fontSize: 15.5, letterSpacing: "-.01em" }}>Permanent record</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 2 }}>Signed &amp; recorded on-chain</div>
+          <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 2 }}>
+            {kind === "invest" ? <>Signed &amp; recorded on-chain</> : "Recorded on-chain"}
+          </div>
           <p style={{ fontSize: 13.5, color: "var(--ink-2)", margin: "12px auto 14px", lineHeight: 1.55, maxWidth: 330 }}>
-            This can&apos;t be edited or deleted, and anyone can check it. It&apos;s how Vera&apos;s
-            track record stays honest.
+            {kind === "invest" ? (
+              <>
+                This can&apos;t be edited or deleted, and anyone can check it. It&apos;s how Vera&apos;s
+                track record stays honest.
+              </>
+            ) : (
+              <>This can&apos;t be edited or deleted, and anyone can check it on the public record.</>
+            )}
           </p>
           {explorerHref ? (
             <a
