@@ -31,5 +31,6 @@ export function useActivity(address?: string) {
     },
   });
   if (demo) return { ...query, data: demo.activity, isLoading: false, isPending: false } as typeof query;
-  return query;
+  // No address yet = the account is still resolving: loading, not "Nothing yet".
+  return address ? query : ({ ...query, isLoading: true } as typeof query);
 }

@@ -26,6 +26,11 @@ import { iconBtn } from "./primitives";
 
 const DOTS = "••••••";
 
+/** Inline placeholder for the small balance figures while the account loads. */
+function SmallSkeleton() {
+  return <span className="skeleton" style={{ display: "inline-block", width: 76, height: 18, borderRadius: 6, verticalAlign: "middle" }} />;
+}
+
 export function HomeScreen({
   go,
 }: {
@@ -141,7 +146,7 @@ export function HomeScreen({
         <div className="card" style={{ flex: 1, padding: "14px 16px" }}>
           <div className="label-eyebrow">Invested</div>
           <div className="tnum" style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>
-            {hideBalance ? DOTS : usd(invested)}
+            {balanceLoading ? <SmallSkeleton /> : hideBalance ? DOTS : usd(invested)}
           </div>
         </div>
         <button
@@ -159,7 +164,7 @@ export function HomeScreen({
           <div>
             <div className="label-eyebrow">Cash to invest</div>
             <div className="tnum" style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>
-              {hideBalance ? DOTS : usd(balance)}
+              {balanceLoading ? <SmallSkeleton /> : hideBalance ? DOTS : usd(balance)}
             </div>
           </div>
           <span

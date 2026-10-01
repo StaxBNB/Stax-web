@@ -73,7 +73,16 @@ export function useUsdcBalance(address?: string) {
     },
   });
   if (demo) return { ...query, data: demo.usdc, isLoading: false, isPending: false } as typeof query;
-  return query;
+  return withAccountPending(query, address);
+}
+
+/**
+ * Before the smart-account address is known the query is disabled, which
+ * react-query reports as "not loading" — screens would then render an empty
+ * "$0.00" state. Report it as loading instead so they show their skeleton.
+ */
+function withAccountPending<Q extends { isLoading: boolean }>(query: Q, address?: string): Q {
+  return address ? query : { ...query, isLoading: true };
 }
 
 interface PortfolioApiHolding {
@@ -131,7 +140,7 @@ export function usePortfolio(address?: string) {
     },
   });
   if (demo) return { ...query, data: demo.portfolio, isLoading: false, isPending: false } as typeof query;
-  return query;
+  return withAccountPending(query, address);
 }
 
 /** True if `symbol` is a buyable stock-tier xStock (the only tier the executor routes today). */
@@ -153,6 +162,7 @@ export function useRefreshBalances() {
       qc.invalidateQueries({ queryKey: ["portfolio"] });
       qc.invalidateQueries({ queryKey: ["activity"] });
       qc.invalidateQueries({ queryKey: ["transactions"] });
+      qc.invalidateQueries({ queryKey: ["vera-record"] });
     };
     invalidate();
     // The read RPC can trail the bundler by a block right after inclusion, so a
