@@ -143,7 +143,7 @@ export const INFERENCE_VERIFIER_ABI = [
   },
 ] as const;
 
-/** IdentityRegistry — reputation + metadata for the Stax agent (agentId 1). */
+/** IdentityRegistry — reputation + metadata for the Stax agent (NEXT_PUBLIC_STAX_AGENT_ID). */
 export const IDENTITY_REGISTRY_ABI = [
   {
     type: "function",

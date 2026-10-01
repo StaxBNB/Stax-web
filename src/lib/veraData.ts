@@ -1,5 +1,5 @@
 // Vera persona copy — ported from the design handoff (data.jsx). Vera's trust
-// signals are now REAL and on-chain: her identity (agentId 1, useAgentIdentity)
+// signals are now REAL and on-chain: her identity (NEXT_PUBLIC_STAX_AGENT_ID, useAgentIdentity)
 // and her track record (useVeraRecord, read from the StaxExecutor log). This file
 // keeps only the static persona copy (name, role, blurb). The illustrative sample
 // track record that used to live here was removed once the real one went live.

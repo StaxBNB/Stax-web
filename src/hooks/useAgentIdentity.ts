@@ -1,6 +1,6 @@
 "use client";
 
-// Reads the Stax agent's on-chain identity (IdentityRegistry, agentId 1) as a
+// Reads the Stax agent's on-chain identity (IdentityRegistry, NEXT_PUBLIC_STAX_AGENT_ID) as a
 // trust signal. The reputation score and signer are read-only and best-effort;
 // if a call reverts we still surface the verified agent id + registry.
 //

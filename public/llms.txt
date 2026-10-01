@@ -16,10 +16,10 @@ Stax is built for people who are new to investing and to crypto. There is no see
 
 ## Pages
 
-- [Home](https://www.stax.best): product overview and how it works.
-- [Live demo](https://www.stax.best/demo): try Stax with demo data, no login required.
-- [Open the app](https://www.stax.best/app): the live product.
+- [Home](https://stax-bnb.vercel.app): product overview and how it works.
+- [Live demo](https://stax-bnb.vercel.app/demo): try Stax with demo data, no login required.
+- [Open the app](https://stax-bnb.vercel.app/app): the live product.
 
 ## More
 
-- [X / Twitter](https://x.com/stax_market): updates and announcements.
+- [X / Twitter](https://x.com/HGunawan07): updates and announcements.

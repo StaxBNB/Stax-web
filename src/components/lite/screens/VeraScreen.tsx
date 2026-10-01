@@ -1,7 +1,7 @@
 "use client";
 
 // Vera — trust & track record (screens_vera.jsx). Now wired to REAL on-chain data:
-// her verifiable identity (agentId 1 in the IdentityRegistry, useAgentIdentity) AND
+// her verifiable identity (NEXT_PUBLIC_STAX_AGENT_ID in the IdentityRegistry, useAgentIdentity) AND
 // her actual track record read from the StaxExecutor event log (useVeraRecord):
 // total recommendations, executed volume, and the most recent recorded plans (each
 // linking to its real BscScan tx). Empty history degrades to an honest 0-state.

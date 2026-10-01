@@ -1,14 +1,14 @@
-// Single source of truth for SEO/canonical metadata. The production site is
-// served on the www host (the apex stax.best 301-redirects to www), so the
-// canonical origin MUST be www to avoid duplicate-content + redirect dilution.
-export const SITE_URL = "https://www.stax.best";
+// Single source of truth for SEO/canonical metadata. The production site is the
+// Vercel deployment at stax-bnb.vercel.app; canonical URLs, OG images and the
+// sitemap all derive from SITE_URL.
+export const SITE_URL = "https://stax-bnb.vercel.app";
 export const SITE_NAME = "Stax";
 
 export const SITE_TAGLINE = "Invest in plain words";
 export const SITE_DESCRIPTION =
   "Invest in real companies with Vera, your investing assistant. Email login, no seed phrase, fees on us. Tokenized stocks on BNB Chain, gasless.";
 
-export const TWITTER_HANDLE = "@stax_market";
+export const TWITTER_HANDLE = "@HGunawan07";
 
 // OG/Twitter share image dimensions (Open Graph standard).
 export const OG_SIZE = { width: 1200, height: 630 } as const;

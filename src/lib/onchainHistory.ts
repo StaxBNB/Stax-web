@@ -8,7 +8,7 @@
 //   LegFilled(planId indexed, tokenOut indexed, usdcIn, received)
 //
 // Vera's global record = every RecommendationCommitted + AllocationExecuted (she
-// is the only advising agent, agentId 1). Per-user history filters by the indexed
+// is the only advising agent, NEXT_PUBLIC_STAX_AGENT_ID). Per-user history filters by the indexed
 // `user` topic. Everything degrades gracefully to a 0-state on empty history.
 import type { PublicClient } from "viem";
 import { parseAbiItem } from "viem";

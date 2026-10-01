@@ -10,7 +10,7 @@
 //
 // Signs with AGENT_SIGNER_PRIVATE_KEY from .env.local (Vera's own signer wallet
 // registers her identity; it must hold a little BNB for gas). The agent card at
-// https://www.stax.best/.well-known/agent-card.json must be DEPLOYED (live)
+// https://stax-bnb.vercel.app/.well-known/agent-card.json must be DEPLOYED (live)
 // before registering — 8004scan fetches it to index the agent.
 import { readFileSync } from "node:fs";
 import {
@@ -30,7 +30,7 @@ const EXPLORER = IS_MAINNET ? "https://bscscan.com" : "https://testnet.bscscan.c
 // no code is found at the address.
 const IDENTITY_REGISTRY = process.env.ERC8004_IDENTITY_REGISTRY ||
   (IS_MAINNET ? "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" : "0x8004A818BFB912233c491871b3d84c89A494BD9e");
-const AGENT_URI = "https://www.stax.best/.well-known/agent-card.json";
+const AGENT_URI = process.env.AGENT_CARD_URI || "https://stax-bnb.vercel.app/.well-known/agent-card.json";
 
 const bnbChain = {
   id: CHAIN_ID, name: IS_MAINNET ? "BNB Smart Chain" : "BNB Smart Chain Testnet",

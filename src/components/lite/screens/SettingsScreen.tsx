@@ -279,9 +279,9 @@ export function SettingsScreen({
           />
           <Row
             icon="link"
-            title="Follow @stax_market"
+            title="Follow @HGunawan07"
             sub="Updates and support on X"
-            onClick={() => window.open("https://x.com/stax_market", "_blank", "noopener")}
+            onClick={() => window.open("https://x.com/HGunawan07", "_blank", "noopener")}
             right={<Icon name="arrowUR" size={16} style={{ color: "var(--ink-3)" }} />}
           />
         </div>

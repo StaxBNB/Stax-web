@@ -1,11 +1,11 @@
 {
   "name": "Vera",
-  "description": "AI broker for real tokenized stocks on BNB Chain. You tell Vera a goal in plain words; she builds a diversified portfolio of xStocks (issued by Backed, traded on PancakeSwap), signs every recommendation with EIP-712, commits it on-chain via StaxExecutor before execution, and places it gasless (ERC-4337). Autopilot runs the strategy on a schedule inside hard user-set bounds: amount, cadence, risk ceiling, spend cap. Every run is checked against those limits before anything signs. Non-custodial; the user holds the tokens.",
-  "image": "https://www.stax.best/icon-512.png",
+  "description": "AI broker for tokenized stocks on BNB Chain. You tell Vera a goal in plain words; she builds a diversified portfolio of tokenized shares (traded on PancakeSwap V3), signs every recommendation with EIP-712, commits it on-chain via StaxExecutor before execution, and places it gasless (ERC-4337). Autopilot runs the strategy on a schedule inside hard user-set bounds: amount, cadence, risk ceiling, spend cap. Every run is checked against those limits before anything signs. Non-custodial; the user holds the tokens.",
+  "image": "https://stax-bnb.vercel.app/icon-512.png",
   "active": true,
   "services": {
     "web": {
-      "url": "https://www.stax.best"
+      "url": "https://stax-bnb.vercel.app"
     }
   },
   "supportedTrust": [
@@ -24,18 +24,21 @@
   ],
   "x402": false,
   "metadata": {
-    "version": "1.0",
+    "version": "1.1",
     "chain": "bsc-testnet",
     "chainId": 97,
-    "app": "https://www.stax.best",
-    "demo": "https://www.stax.best/demo",
-    "sourceCode": "https://github.com/Magicianhax/stax",
-    "staxExecutor": "0x8d684d9efcd779e69c29901292bd88266d5d2bdf",
-    "inferenceVerifier": "0x674031d24b0b7874f1b9b278b98ebfebbdaa96ec",
-    "staxIdentityRegistry": "0x5dd8fcb6a206b9f24847fbbc925e642b836555ea",
-    "staxAgentId": 1,
-    "note": "Vera also holds agentId 1 in Stax's own ERC-8004-style IdentityRegistry on BNB Chain (address above); recommendations are committed through StaxExecutor and risk-gated by InferenceVerifier.",
-    "erc8004AgentId": "97:2473",
-    "erc8004IdentityRegistry": "0x8004A818BFB912233c491871b3d84c89A494BD9e"
+    "app": "https://stax-bnb.vercel.app/app",
+    "demo": "https://stax-bnb.vercel.app/demo",
+    "sourceCode": "https://github.com/StaxBNB/Stax-web",
+    "contracts": "https://github.com/StaxBNB/Stax-contracts",
+    "staxExecutor": "0x7c67f22f27fc50ed99a848e5a4b6324b9ea16a3d",
+    "inferenceVerifier": "0x15cfe310256c482e28699115430f6a323386e801",
+    "agentSigner": "0x118271A901CD726e338BAAa464693539874E40b8",
+    "staxIdentityRegistry": "0xfbc601d4d084ac9f134b88662cf5162c27e8ff4b",
+    "staxAgentId": 2,
+    "note": "Vera holds agentId 2 in Stax's own ERC-8004-style IdentityRegistry on BNB Chain (address above); recommendations are committed through StaxExecutor and risk-gated by InferenceVerifier, which only trusts the agent signer above.",
+    "erc8004AgentId": "97:2543",
+    "erc8004IdentityRegistry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+    "x": "https://x.com/HGunawan07"
   }
 }
