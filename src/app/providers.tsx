@@ -58,6 +58,10 @@ export function Providers({ children }: { children: ReactNode }) {
         // their own wallet keep using that EOA (it owns their gasless smart account).
         embeddedWallets: {
           ethereum: { createOnLogin: "users-without-wallets" },
+          // No Privy "Sign message" modal with a raw hex hash on every action: the
+          // user already confirms in Stax's own UI (Invest / Buy / Sell / Review &
+          // send / "Run now?"), and hex is exactly what the product promises to hide.
+          showWalletUIs: false,
         },
         // Branded to match the app: deep "Soft"-dark surface, sage-green accent,
         // the Stax logo, email/social first (beginner-friendly), on-voice copy.
