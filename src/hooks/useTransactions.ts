@@ -1,7 +1,7 @@
 "use client";
 
-// useTransactions — a wallet's incoming + outgoing transfer history from
-// /api/transactions (Alchemy + on-chain fallback). Refreshes on focus and on a
+// useTransactions — a wallet's transaction history from /api/transactions
+// (Stax's own tx log; each row links to the explorer). Refreshes on focus and on a
 // short interval, like the balance hooks, so new transfers show without a manual
 // refresh. Inert in demo mode.
 import { useQuery } from "@tanstack/react-query";
@@ -29,5 +29,6 @@ export function useTransactions(address?: string) {
     queryFn: () => fetchTransactions(address as string),
   });
   if (demo) return { ...query, data: [] as WalletTx[], isLoading: false, isPending: false } as typeof query;
-  return query;
+  // No address yet = the account is still resolving: loading, not "No transactions yet".
+  return address ? query : ({ ...query, isLoading: true } as typeof query);
 }

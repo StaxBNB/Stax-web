@@ -115,7 +115,9 @@ export async function GET(req: NextRequest) {
         holdings,
         asOf: new Date().toISOString(),
       },
-      { headers: { "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30" } },
+      // Not CDN-cached: right after a trade the refetch must see the new balances
+      // (prices are already cached in-process above).
+      { headers: { "Cache-Control": "no-store" } },
     );
   } catch (err) {
     return serverError("portfolio", err);

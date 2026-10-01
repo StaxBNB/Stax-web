@@ -1,10 +1,9 @@
-// GET /api/activity?address=0x… — a user's Stax on-chain activity (AI invests
-// via the executor), newest first. Public chain data, no auth — rate limited
-// per IP, scan cached server-side. Same reason as /api/vera-record: the full
-// deploy→latest eth_getLogs range exceeds the public RPC's 10k-block cap.
+// GET /api/activity?address=0x… — a user's Stax plan activity (AI invests and
+// Autopilot runs), newest first, from Stax's own transaction log. Public chain
+// facts, no auth — rate limited per IP.
 import type { NextRequest } from "next/server";
 import { isAddress } from "viem";
-import { getUserActivityServer } from "@/lib/server/executorLogs";
+import { activityFromLog } from "@/lib/server/txLog";
 import { rateLimit, clientIp } from "@/lib/server/rateLimit";
 import { badRequest, tooManyRequests, serverError } from "@/lib/server/respond";
 
@@ -18,10 +17,10 @@ export async function GET(req: NextRequest) {
   if (!isAddress(address)) return badRequest("A valid wallet address is required.");
 
   try {
-    const activity = await getUserActivityServer(address as `0x${string}`);
+    const activity = await activityFromLog(address);
     return Response.json(
       { activity: activity.map((a) => ({ ...a, blockNumber: Number(a.blockNumber) })) },
-      { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=60" } },
+      { headers: { "Cache-Control": "no-store" } },
     );
   } catch (err) {
     return serverError("activity", err);

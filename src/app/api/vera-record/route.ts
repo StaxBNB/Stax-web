@@ -1,11 +1,11 @@
-// GET /api/vera-record[?user=0x…] — Vera's on-chain track record (global, or
-// scoped to one user) + her IdentityRegistry reputation. Public chain data, no
-// auth — rate limited per IP, and the underlying scan is cached server-side.
-// Exists because browsers can't eth_getLogs the full deploy→latest range
-// against the public RPC (10k-block cap); the server uses Etherscan's index.
+// GET /api/vera-record[?user=0x…] — Vera's track record (global, or scoped to one
+// user) from Stax's own transaction log, plus her IdentityRegistry reputation.
+// Every recorded plan carries its tx hash, so each one is checkable on the
+// explorer. Public, no auth — rate limited per IP.
 import type { NextRequest } from "next/server";
 import { isAddress } from "viem";
-import { getVeraRecordServer, getReputationServer } from "@/lib/server/executorLogs";
+import { veraRecordFromLog } from "@/lib/server/txLog";
+import { getReputationServer } from "@/lib/server/reputation";
 import { rateLimit, clientIp } from "@/lib/server/rateLimit";
 import { badRequest, tooManyRequests, serverError } from "@/lib/server/respond";
 
@@ -19,10 +19,7 @@ export async function GET(req: NextRequest) {
   if (user && !isAddress(user)) return badRequest("user must be a valid address.");
 
   try {
-    const [record, reputation] = await Promise.all([
-      getVeraRecordServer((user as `0x${string}`) ?? undefined),
-      getReputationServer(),
-    ]);
+    const [record, reputation] = await Promise.all([veraRecordFromLog(user ?? undefined), getReputationServer()]);
     return Response.json(
       {
         record: {
@@ -34,7 +31,7 @@ export async function GET(req: NextRequest) {
         },
         reputation: reputation === null ? null : reputation.toString(),
       },
-      { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120" } },
+      { headers: { "Cache-Control": user ? "no-store" : "public, s-maxage=15, stale-while-revalidate=60" } },
     );
   } catch (err) {
     return serverError("vera-record", err);

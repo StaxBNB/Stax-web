@@ -223,15 +223,15 @@ export function WalletScreen({
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 0", textAlign: "left", borderBottom: i < txRows.length - 1 ? "1px solid var(--line-2)" : "none" }}
                 >
                   <div style={{ position: "relative", flex: "none" }}>
-                    <TokenLogo symbol={t.symbol} size={38} />
+                    <TokenLogo symbol={t.logo ?? t.symbol} size={38} />
                     <span style={{ position: "absolute", right: -2, bottom: -2, width: 18, height: 18, borderRadius: 99, display: "grid", placeItems: "center", background: incoming ? "var(--primary)" : "var(--surface-2)", color: incoming ? "var(--primary-ink)" : "var(--ink-2)", boxShadow: "0 0 0 2px var(--surface)" }}>
                       <Icon name={incoming ? "arrowDR" : "arrowUR"} size={11} stroke={2.6} />
                     </span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 15 }}>{incoming ? "Received" : "Sent"} {t.symbol}</div>
+                    <div style={{ fontWeight: 600, fontSize: 15 }}>{t.label ?? `${incoming ? "Received" : "Sent"} ${t.symbol}`}</div>
                     <div className="mono" style={{ fontSize: 11.5, color: "var(--ink-2)", marginTop: 2 }}>
-                      {shortAddress(t.counterparty)}{t.timestamp ? ` · ${relTime(t.timestamp)}` : ""}
+                      {[t.counterparty ? shortAddress(t.counterparty) : "", t.timestamp ? relTime(t.timestamp) : ""].filter(Boolean).join(" · ")}
                     </div>
                   </div>
                   <div className="tnum" style={{ fontWeight: 700, fontSize: 15, color: incoming ? "var(--primary)" : "var(--ink)" }}>
@@ -271,18 +271,20 @@ export function WalletScreen({
       </BottomSheet>
 
       {/* transaction detail sheet */}
-      <BottomSheet open={!!tx} onClose={() => setTx(null)} title={tx ? (tx.direction === "in" ? "Received" : "Sent") : undefined}>
+      <BottomSheet open={!!tx} onClose={() => setTx(null)} title={tx ? (tx.label ?? (tx.direction === "in" ? "Received" : "Sent")) : undefined}>
         {tx && (
           <div style={{ display: "flex", flexDirection: "column", gap: 18, padding: "2px 2px 8px" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-              <TokenLogo symbol={tx.symbol} size={56} />
+              <TokenLogo symbol={tx.logo ?? tx.symbol} size={56} />
               <div className="tnum" style={{ fontSize: 30, fontWeight: 700, letterSpacing: "-.03em", color: tx.direction === "in" ? "var(--primary)" : "var(--ink)" }}>
                 {tx.direction === "in" ? "+" : "−"}{fmtAmt(tx.amount)} {tx.symbol}
               </div>
             </div>
             <div className="card" style={{ padding: "4px 16px" }}>
               <DetailRow label="Status" value="Confirmed" />
-              <DetailRow label={tx.direction === "in" ? "From" : "To"} value={shortAddress(tx.counterparty)} mono borderTop />
+              {tx.counterparty && (
+                <DetailRow label={tx.direction === "in" ? "From" : "To"} value={shortAddress(tx.counterparty)} mono borderTop />
+              )}
               <DetailRow label="Network" value="BNB Chain" borderTop />
               {tx.timestamp && (
                 <DetailRow label="When" value={new Date(tx.timestamp * 1000).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })} borderTop />

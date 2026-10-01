@@ -103,7 +103,33 @@ export async function sendSponsoredCalls(provider: EIP1193Provider, calls: Call[
   if (!receipt.success) {
     throw new Error(`UserOperation reverted (txHash ${receipt.receipt.transactionHash}).`);
   }
+  // Record it in Stax's own tx log before returning, so wallet history /
+  // activity already include it when the caller refreshes balances.
+  await logTx(receipt.receipt.transactionHash);
   return receipt;
+}
+
+/**
+ * Hand a mined tx hash to the server's tx log (POST /api/tx-log), which
+ * re-derives the record from the on-chain receipt. Best-effort and bounded: the
+ * transaction already succeeded, so a logging hiccup must never surface as a
+ * failed trade.
+ */
+async function logTx(txHash: Hex) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8_000);
+  try {
+    await fetch("/api/tx-log", {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(await authHeader()) },
+      body: JSON.stringify({ txHash }),
+      signal: ctrl.signal,
+    });
+  } catch {
+    /* history is best-effort */
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // --- internals -------------------------------------------------------------

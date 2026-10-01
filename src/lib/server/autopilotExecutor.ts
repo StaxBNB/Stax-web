@@ -13,6 +13,7 @@ import { createPublicClient, encodeFunctionData, http } from "viem";
 import { bsc, bscTestnet } from "viem/chains";
 import { checkBounds, type AutopilotConfig } from "@/lib/autopilot";
 import { recordRun, logRun } from "@/lib/server/autopilotStore";
+import { recordTx } from "@/lib/server/txLog";
 import { buildAllocation } from "@/lib/server/allocate";
 import { getServerSmartAccountClient } from "@/lib/server/privySmartAccount";
 import { buildLegs, STAX_EXECUTOR } from "@/lib/legBuilder";
@@ -122,6 +123,11 @@ export async function runAutopilot(
       return { ok: false, reason };
     }
     txHash = receipt.receipt.transactionHash;
+    // Stax's own tx log (wallet history / activity / Vera's record). Best-effort:
+    // the run already succeeded on-chain.
+    await recordTx(receipt.receipt.transactionHash, { source: "autopilot" }).catch((err) =>
+      console.error("[autopilot] tx log failed:", err instanceof Error ? err.message : err),
+    );
   } catch (e) {
     const reason = e instanceof Error ? e.message : "Submission failed.";
     await logRun({ userId: working.userId, ranAt: now, amountUsd: working.amountUsd, assessedRiskBps, status: "error", reason });

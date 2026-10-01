@@ -1,10 +1,10 @@
-// GET /api/transactions?address=0x… — a wallet's incoming + outgoing transfers,
-// newest first. Uses Alchemy (better infra) when ALCHEMY_API_KEY is set, with an
-// on-chain log-scan fallback. Public chain data, so no auth — but rate limited
-// per IP since it can drive RPC cost.
+// GET /api/transactions?address=0x… — a wallet's transactions, newest first, from
+// Stax's own transaction log (lib/server/txLog.ts). No explorer API: every row is
+// re-derived from its on-chain receipt and carries the tx hash as proof. Public
+// chain facts, so no auth — rate limited per IP.
 import type { NextRequest } from "next/server";
 import { isAddress } from "viem";
-import { getWalletTransfers, TXN_SOURCE } from "@/lib/server/walletTransfers";
+import { listWalletTx } from "@/lib/server/txLog";
 import { rateLimit, clientIp } from "@/lib/server/rateLimit";
 import { badRequest, tooManyRequests, serverError } from "@/lib/server/respond";
 
@@ -18,11 +18,9 @@ export async function GET(req: NextRequest) {
   if (!isAddress(address)) return badRequest("A valid wallet address is required.");
 
   try {
-    const transactions = await getWalletTransfers(address);
-    return Response.json(
-      { transactions, source: TXN_SOURCE },
-      { headers: { "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30" } },
-    );
+    const transactions = await listWalletTx(address);
+    // Not CDN-cached: a new trade must show up on the very next refetch.
+    return Response.json({ transactions, source: "stax-log" }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     return serverError("transactions", err);
   }
