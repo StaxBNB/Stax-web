@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 // Baseline HTTP security headers. The CSP is intentionally limited to
@@ -16,6 +17,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Pin Turbopack's root to this app. A stray lockfile higher up (e.g. in the
+  // home directory) otherwise becomes the inferred root, which widens file
+  // watching and left edits (globals.css) unserved in dev.
+  turbopack: { root: path.join(__dirname) },
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },
