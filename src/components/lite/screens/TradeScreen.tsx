@@ -17,7 +17,7 @@ import { useMarketHistory } from "@/hooks/useMarket";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { displayFor } from "@/lib/displayAssets";
 import { Icon, AssetTile, Crossfade, PriceChart } from "@/components/design";
-import { usd, tokenQty, fromUnits } from "@/lib/format";
+import { usd, tokenQty } from "@/lib/format";
 import { STAX_FEE_LABEL } from "@/lib/fees";
 import { iconBtn, Spinner } from "./primitives";
 
@@ -68,7 +68,6 @@ export function TradeScreen({
   const [sellPct, setSellPct] = useState(100);
   const heldRaw = holding?.raw ?? BigInt(0);
   const sellRaw = (heldRaw * BigInt(Math.round(sellPct))) / BigInt(100);
-  const sellQty = holding ? fromUnits(sellRaw, asset.decimals ?? 18) : 0;
   const { data: sellQuote, isFetching: sellFetching } = useSellQuote(
     side === "sell" && sellable ? asset : null,
     side === "sell" ? sellRaw : BigInt(0),
