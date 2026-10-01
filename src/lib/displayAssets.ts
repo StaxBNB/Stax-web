@@ -7,6 +7,7 @@
 // Copy + colors are ported from the design handoff (data.jsx). Symbols that have
 // no design entry fall back to sensible defaults so nothing ever crashes.
 import type { TileAsset } from "@/components/design";
+import { ALL_ASSETS, isRoutable } from "@/lib/chain";
 
 export interface AssetDisplay extends TileAsset {
   /** Plain-language category shown in Lite (e.g. "Big tech", "Funds", "Safer"). */
@@ -93,9 +94,16 @@ function fallback(symbol: string, name?: string): AssetDisplay {
   };
 }
 
+const LISTED = new Set(ALL_ASSETS.map((a) => a.symbol));
+
 /** Full display record for a ticker symbol (never throws). */
 export function displayFor(symbol: string, name?: string): AssetDisplay {
-  return DISPLAY[symbol] ?? fallback(symbol, name);
+  const d = DISPLAY[symbol] ?? fallback(symbol, name);
+  // A listed asset with no configured swap route on this chain (e.g. NVDA on BSC
+  // testnet) can't be bought yet — flag it `coming` so every surface agrees:
+  // the Market "Soon" badge, the disabled Buy button, and Vera's universe.
+  if (LISTED.has(symbol) && !d.coming && !isRoutable(symbol)) return { ...d, coming: true };
+  return d;
 }
 
 /** Just the bits a design <AssetTile>/<HoldingRow> needs. */
